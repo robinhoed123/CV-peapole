@@ -1,4 +1,4 @@
-import cv2
+import cv2 
 import os
 import numpy as np
 from collections import Counter
@@ -8,8 +8,8 @@ from ultralytics import YOLO
 
 #Settings
 embed_dir = r"finalProjeckt/embeddings_buffalo_l"
-input_dir = Path(r"kagelData/testset")
-output_dir = r"Facemodel/testdata\output"
+input_dir = Path(r"finalProjeckt/input")
+output_dir = r"finalProjeckt/output"
 yolo_model_path = r"finalProjeckt/best.pt"
 yolo_model = YOLO(yolo_model_path)
 
@@ -43,11 +43,14 @@ def drawOnimg(data, imgpath: str,img,predicton):
     for idx, face in enumerate(data):
         x1, y1, x2, y2 = face[1:5]
         # draw box
-        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 5)
+        pts = np.array([[x1, y2], [x2, y2], [x2, y2-100], [x1, y2-100]], np.int32)
+        pts = pts.reshape((-1, 1, 2))
+        cv2.fillPoly(img, [pts], (0, 0, 255))
         # write name
-        cv2.putText(img, predicton[idx][0], (x1 + 20, y2 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
+        cv2.putText(img, predicton[idx][0], (x1 + 20, y2 - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
         # write confidence
-        cv2.putText(img, str(predicton[idx][1]), (x1 + 20, y2 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
+        cv2.putText(img, str(predicton[idx][1]), (x1 + 20, y2 - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
     os.makedirs(output_dir, exist_ok=True)
     filename = os.path.basename(imgpath)
     output_path = os.path.join(output_dir, filename)
@@ -128,7 +131,7 @@ def l2_norm(x):
     return x / np.linalg.norm(x)
 
 def find_person(embedding, embed_dir=embed_dir, threshold=0.35, aantal=1200):
-    # matches embedding against database files
+    # matches embedding
     emb = l2_norm(embedding)
     sims = []
 
@@ -200,14 +203,13 @@ def scaleimg(img, factor, upscale=False):
 def yolo_prediction(img):
     """
     Runs YOLO prediction on the image and returns formatted results.
-    
     Args:
         img: The input image.
         
     Returns:
         A list of predictions: [[label, confidence, [x1, y1, x2, y2]], ...]
     """
-    results = yolo_model(img, verbose=False)
+    results = yolo_model(img, verbose=False, device=0) 
     preds = []
     for result in results:
         boxes = result.boxes
@@ -377,7 +379,7 @@ for p, img_path in enumerate(imglist):
         new_x1 = w - x2
         new_x2 = w - x1
         
-        # Ensure x1 < x2 (though the math above should guarantee it if x1 < x2 originally)
+        # Ensure x1 < x2
         if new_x1 > new_x2:
             new_x1, new_x2 = new_x2, new_x1
             
