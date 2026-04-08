@@ -1,4 +1,4 @@
-# AI Frame work Robin Herickx 
+# AI Frame works Robin Herickx 
 
 This project combines InsightFace and YOLO models to detect and recognize faces in images. It processes images from an input folder, identifies people using facial embeddings, and generates annotated output images with bounding boxes and labels.
 
